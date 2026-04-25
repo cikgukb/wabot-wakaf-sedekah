@@ -98,6 +98,7 @@ TOPICS = [
     "sedekah dalam keadaan susah",
     "manfaat wakaf kepada masyarakat",
     "kisah inspirasi orang yang berwakaf",
+    "fadilat sedekah khusus untuk golongan peniaga",
 ]
 
 def generate_tips():
