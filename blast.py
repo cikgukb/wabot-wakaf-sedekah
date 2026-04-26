@@ -101,6 +101,16 @@ TOPICS = [
     "manfaat wakaf kepada masyarakat",
     "kisah inspirasi orang yang berwakaf",
     "fadilat sedekah khusus untuk golongan peniaga",
+    "wakaf perniagaan untuk keberkatan rezeki",
+    "sedekah dari keuntungan perniagaan setiap hari",
+    "cara peniaga Islam urus zakat perniagaan dengan betul",
+    "infaq untuk pekerja dan kakitangan yang susah",
+    "wakaf peralatan perniagaan untuk manfaat komuniti",
+    "amalan peniaga soleh sebelum buka kedai pagi hari",
+    "berkat perniagaan melalui sedekah jariah yang konsisten",
+    "wakaf sebagai perancangan kewangan jangka panjang peniaga",
+    "sedekah produk atau perkhidmatan kepada yang memerlukan",
+    "kisah peniaga berjaya kerana amalkan sedekah dan wakaf",
 ]
 
 def generate_tips():
