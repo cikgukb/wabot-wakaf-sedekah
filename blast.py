@@ -3,7 +3,9 @@ import requests
 import os
 import time
 import random
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+
+MYT = timezone(timedelta(hours=8))  # Malaysia Time UTC+8
 
 ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
 WABOT_ACCESS_TOKEN = os.environ["WABOT_ACCESS_TOKEN"]
@@ -60,7 +62,7 @@ def already_blasted_today():
     gist_id = get_gist_id()
     r = requests.get(f"https://api.github.com/gists/{gist_id}", headers=headers)
     content = r.json()["files"][GIST_FILENAME]["content"]
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(MYT).strftime("%Y-%m-%d")
     return today in content
 
 def save_blast_log(gist_id):
@@ -68,7 +70,7 @@ def save_blast_log(gist_id):
         "Authorization": f"token {GITHUB_GIST_TOKEN}",
         "Accept": "application/vnd.github.v3+json"
     }
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    today = datetime.now(MYT).strftime("%Y-%m-%d %H:%M MYT")
     payload = {
         "files": {GIST_FILENAME: {"content": f"Last blast: {today}"}}
     }
