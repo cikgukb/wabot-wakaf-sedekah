@@ -157,8 +157,17 @@ def blast_to_groups(message):
         }
         try:
             response = requests.post(url, json=payload, timeout=10)
+            print(f"  HTTP {response.status_code} | {response.text[:200]}")
             if response.status_code == 200:
-                success += 1
+                try:
+                    data = response.json()
+                    if data.get("status") in ("success", True, 1) or data.get("error") == False:
+                        success += 1
+                    else:
+                        print(f"  ⚠️ API error: {data}")
+                        failed += 1
+                except Exception:
+                    success += 1  # fallback: assume 200 = ok
             else:
                 failed += 1
         except Exception as e:
@@ -195,16 +204,31 @@ def test_send_to_number(message, number="60133700200"):
 
 if __name__ == "__main__":
 
-    # ── TEST MODE: hantar ke nombor sahaja ──
+    # ── DIAGNOSTIC: test hantar ke nombor + 1 group ──
     print("🚀 Generating tips wakaf & sedekah...")
     tips = generate_tips()
     print(f"📝 Tips hari ini:\n{tips}\n")
 
-    print("📤 TEST: Hantar ke 0133700200...")
+    print("📤 DIAG 1: Test hantar ke nombor 0133700200...")
     result = test_send_to_number(tips)
-    print(f"{'✅ Berjaya!' if result else '❌ Gagal!'}")
+    print(f"{'✅ Berjaya!' if result else '❌ Gagal!'}\n")
 
-    # ── GROUP BLAST (disabled untuk testing) ──
+    print("📤 DIAG 2: Test hantar ke group pertama...")
+    test_send_to_number.__doc__  # no-op
+    url = "https://app.wabot.my/api/send_group"
+    import requests as _req
+    payload = {
+        "group_id": GROUP_IDS[0],
+        "type": "text",
+        "message": "[TEST DIAGNOSTIK] " + tips[:100],
+        "instance_id": WABOT_INSTANCE_ID,
+        "access_token": WABOT_ACCESS_TOKEN
+    }
+    r = _req.post(url, json=payload, timeout=10)
+    print(f"HTTP Status: {r.status_code}")
+    print(f"Response body: {r.text}")
+
+    # ── GROUP BLAST (disabled sementara diagnostic) ──
     # gist_id = get_gist_id()
     # if already_blasted_today():
     #     print("⛔ BERHENTI — Blast dah dibuat hari ni.")
