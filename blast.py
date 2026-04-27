@@ -175,22 +175,39 @@ def blast_to_groups(message):
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
+def test_send_to_number(message, number="60133700200"):
+    url = "https://app.wabot.my/api/send"
+    payload = {
+        "number": number,
+        "type": "text",
+        "message": message,
+        "instance_id": WABOT_INSTANCE_ID,
+        "access_token": WABOT_ACCESS_TOKEN
+    }
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        print(f"Status: {response.status_code}")
+        print(f"Response: {response.text}")
+        return response.status_code == 200
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
+
 if __name__ == "__main__":
 
-    print("🔍 Semak log blast hari ni...")
-    gist_id = get_gist_id()
-
-    if already_blasted_today():
-        print("⛔ BERHENTI — Blast dah dibuat hari ni. Cuba esok.")
-        exit(0)
-
-    print("✅ Belum blast hari ni. Teruskan...\n")
-
+    # ── TEST MODE: hantar ke nombor sahaja ──
     print("🚀 Generating tips wakaf & sedekah...")
     tips = generate_tips()
     print(f"📝 Tips hari ini:\n{tips}\n")
 
-    print(f"📤 Blasting ke {len(GROUP_IDS)} groups...")
-    blast_to_groups(tips)
+    print("📤 TEST: Hantar ke 0133700200...")
+    result = test_send_to_number(tips)
+    print(f"{'✅ Berjaya!' if result else '❌ Gagal!'}")
 
-    save_blast_log(gist_id)
+    # ── GROUP BLAST (disabled untuk testing) ──
+    # gist_id = get_gist_id()
+    # if already_blasted_today():
+    #     print("⛔ BERHENTI — Blast dah dibuat hari ni.")
+    #     exit(0)
+    # blast_to_groups(tips)
+    # save_blast_log(gist_id)
