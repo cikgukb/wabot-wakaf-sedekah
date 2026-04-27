@@ -220,31 +220,16 @@ def test_send_to_number(message, number="60133700200"):
 
 if __name__ == "__main__":
 
-    # ── DIAGNOSTIC: test hantar ke nombor + 1 group ──
     print("🚀 Generating tips wakaf & sedekah...")
     tips = generate_tips()
     print(f"📝 Tips hari ini:\n{tips}\n")
 
-    print("📤 DIAG 1: Test hantar ke nombor 0133700200...")
+    # ── HANTAR KE NOMBOR SAHAJA (group blast disabled) ──
+    print("📤 Hantar ke 60133700200...")
     result = test_send_to_number(tips)
-    print(f"{'✅ Berjaya!' if result else '❌ Gagal!'}\n")
+    print(f"{'✅ Berjaya!' if result else '❌ Gagal!'}")
 
-    print("📤 DIAG 2: Test hantar ke group pertama...")
-    test_send_to_number.__doc__  # no-op
-    url = "https://app.wabot.my/api/send_group"
-    import requests as _req
-    payload = {
-        "group_id": GROUP_IDS[0],
-        "type": "text",
-        "message": "[TEST DIAGNOSTIK] " + tips[:100],
-        "instance_id": WABOT_INSTANCE_ID,
-        "access_token": WABOT_ACCESS_TOKEN
-    }
-    r = _req.post(url, json=payload, timeout=10)
-    print(f"HTTP Status: {r.status_code}")
-    print(f"Response body: {r.text}")
-
-    # ── GROUP BLAST (disabled sementara diagnostic) ──
+    # ── GROUP BLAST (enable balik bila dah confirmed working) ──
     # gist_id = get_gist_id()
     # if already_blasted_today():
     #     print("⛔ BERHENTI — Blast dah dibuat hari ni.")
