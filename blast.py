@@ -182,22 +182,6 @@ def blast_to_groups(message):
 
     print(f"\n🎯 SELESAI — Berjaya: {success} | Gagal: {failed} | Total: {total}")
 
-    # ── Hantar salinan ke nombor sendiri sebagai bukti blast ──
-    MONITOR_NUMBER = "60133700200"
-    monitor_url = "https://app.wabot.my/api/send"
-    monitor_payload = {
-        "number": MONITOR_NUMBER,
-        "type": "text",
-        "message": f"✅ [BLAST REPORT]\nBerjaya: {success}/{total}\nGagal: {failed}/{total}\n\n" + message,
-        "instance_id": WABOT_INSTANCE_ID,
-        "access_token": WABOT_ACCESS_TOKEN
-    }
-    try:
-        r = requests.post(monitor_url, json=monitor_payload, timeout=10)
-        print(f"📱 Monitor ({MONITOR_NUMBER}): HTTP {r.status_code} | {r.text[:100]}")
-    except Exception as e:
-        print(f"📱 Monitor error: {e}")
-
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def test_send_to_number(message, number="60133700200"):
