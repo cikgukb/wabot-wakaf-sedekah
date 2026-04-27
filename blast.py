@@ -220,19 +220,22 @@ def test_send_to_number(message, number="60133700200"):
 
 if __name__ == "__main__":
 
+    # ── Safety check: jangan blast 2x sehari ──
+    gist_id = get_gist_id()
+    print("🔍 Semak log blast hari ni...")
+    if already_blasted_today():
+        print("⛔ BERHENTI — Blast dah dibuat hari ni. Cuba esok.")
+        exit(0)
+    print("✅ Belum blast hari ni. Teruskan...\n")
+
+    # ── Generate tips ──
     print("🚀 Generating tips wakaf & sedekah...")
     tips = generate_tips()
     print(f"📝 Tips hari ini:\n{tips}\n")
 
-    # ── HANTAR KE NOMBOR SAHAJA (group blast disabled) ──
-    print("📤 Hantar ke 60133700200...")
-    result = test_send_to_number(tips)
-    print(f"{'✅ Berjaya!' if result else '❌ Gagal!'}")
+    # ── BLAST KE 18 GROUPS ──
+    print(f"📤 Blasting ke {len(GROUP_IDS)} groups...")
+    blast_to_groups(tips)
 
-    # ── GROUP BLAST (enable balik bila dah confirmed working) ──
-    # gist_id = get_gist_id()
-    # if already_blasted_today():
-    #     print("⛔ BERHENTI — Blast dah dibuat hari ni.")
-    #     exit(0)
-    # blast_to_groups(tips)
-    # save_blast_log(gist_id)
+    # ── Save log supaya tak double-blast ──
+    save_blast_log(gist_id)
