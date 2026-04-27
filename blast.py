@@ -177,14 +177,14 @@ def blast_to_groups(message):
 
 if __name__ == "__main__":
 
-    print("🔍 Semak log blast hari ni...")
+    # SAFETY CHECK DISABLED FOR TESTING
     gist_id = get_gist_id()
 
-    if already_blasted_today():
-        print("⛔ BERHENTI — Blast dah dibuat hari ni. Cuba esok.")
-        exit(0)
+    # if already_blasted_today():
+    #     print("⛔ BERHENTI — Blast dah dibuat hari ni. Cuba esok.")
+    #     exit(0)
 
-    print("✅ Belum blast hari ni. Teruskan...\n")
+    print("✅ [TEST MODE] Safety check disabled. Teruskan...\n")
 
     print("🚀 Generating tips wakaf & sedekah...")
     tips = generate_tips()
