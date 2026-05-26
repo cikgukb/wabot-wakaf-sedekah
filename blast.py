@@ -38,46 +38,117 @@ GROUP_IDS = [
 # ─── GitHub Gist Safety Check ────────────────────────────────────────────────
 
 def get_gist_id():
+    """Fetch or create GitHub Gist for blast logging."""
     headers = {
         "Authorization": f"token {GITHUB_GIST_TOKEN}",
         "Accept": "application/vnd.github.v3+json"
     }
-    r = requests.get("https://api.github.com/gists", headers=headers)
-    for gist in r.json():
-        if GIST_FILENAME in gist.get("files", {}):
-            return gist["id"]
-    payload = {
-        "description": "Wabot Wakaf Blast Log",
-        "public": False,
-        "files": {GIST_FILENAME: {"content": "init"}}
-    }
-    r = requests.post("https://api.github.com/gists", headers=headers, json=payload)
-    return r.json()["id"]
+    
+    try:
+        r = requests.get("https://api.github.com/gists", headers=headers, timeout=10)
+        
+        # Validate HTTP response
+        if r.status_code != 200:
+            print(f"⚠️  GitHub API error: {r.status_code}")
+            print(f"Response: {r.text[:500]}")
+            raise Exception(f"GitHub API returned {r.status_code}")
+        
+        # Parse JSON and validate it's a list
+        data = r.json()
+        if not isinstance(data, list):
+            print(f"⚠️  Unexpected API response format (not a list): {type(data)}")
+            raise Exception("GitHub API returned unexpected format")
+        
+        # Search for existing gist with our filename
+        for gist in data:
+            if not isinstance(gist, dict):
+                print(f"⚠️  Skipping non-dict gist entry: {type(gist)}")
+                continue
+            
+            files = gist.get("files", {})
+            if isinstance(files, dict) and GIST_FILENAME in files:
+                print(f"✅ Found existing gist: {gist['id']}")
+                return gist["id"]
+        
+        # If not found, create new gist
+        print("📝 Creating new gist...")
+        payload = {
+            "description": "Wabot Wakaf Blast Log",
+            "public": False,
+            "files": {GIST_FILENAME: {"content": "init"}}
+        }
+        r = requests.post("https://api.github.com/gists", headers=headers, json=payload, timeout=10)
+        
+        if r.status_code not in (200, 201):
+            print(f"⚠️  Failed to create gist: {r.status_code}")
+            print(f"Response: {r.text[:500]}")
+            raise Exception(f"Failed to create gist: {r.status_code}")
+        
+        new_gist = r.json()
+        if not isinstance(new_gist, dict) or "id" not in new_gist:
+            print(f"⚠️  Unexpected create response: {new_gist}")
+            raise Exception("Invalid gist creation response")
+        
+        gist_id = new_gist["id"]
+        print(f"✅ Created new gist: {gist_id}")
+        return gist_id
+        
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Network error: {e}")
+        raise
+    except Exception as e:
+        print(f"❌ Error in get_gist_id: {e}")
+        raise
 
 def already_blasted_today():
-    headers = {
-        "Authorization": f"token {GITHUB_GIST_TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-    gist_id = get_gist_id()
-    r = requests.get(f"https://api.github.com/gists/{gist_id}", headers=headers)
-    content = r.json()["files"][GIST_FILENAME]["content"]
-    today = datetime.now(MYT).strftime("%Y-%m-%d")
-    return today in content
+    """Check if we already blasted today."""
+    try:
+        headers = {
+            "Authorization": f"token {GITHUB_GIST_TOKEN}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        gist_id = get_gist_id()
+        r = requests.get(f"https://api.github.com/gists/{gist_id}", headers=headers, timeout=10)
+        
+        if r.status_code != 200:
+            print(f"⚠️  Failed to fetch gist content: {r.status_code}")
+            return False  # Assume not blasted if we can't check
+        
+        gist_data = r.json()
+        if not isinstance(gist_data, dict) or "files" not in gist_data:
+            print(f"⚠️  Unexpected gist response format")
+            return False
+        
+        content = gist_data["files"].get(GIST_FILENAME, {}).get("content", "")
+        today = datetime.now(MYT).strftime("%Y-%m-%d")
+        return today in content
+        
+    except Exception as e:
+        print(f"⚠️  Error checking blast status: {e}")
+        return False  # Assume not blasted to allow retry
 
 def save_blast_log(gist_id):
-    headers = {
-        "Authorization": f"token {GITHUB_GIST_TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-    today = datetime.now(MYT).strftime("%Y-%m-%d %H:%M MYT")
-    payload = {
-        "files": {GIST_FILENAME: {"content": f"Last blast: {today}"}}
-    }
-    requests.patch(f"https://api.github.com/gists/{gist_id}", headers=headers, json=payload)
-    print(f"✅ Log disimpan: {today}")
+    """Save blast timestamp to gist."""
+    try:
+        headers = {
+            "Authorization": f"token {GITHUB_GIST_TOKEN}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        today = datetime.now(MYT).strftime("%Y-%m-%d %H:%M MYT")
+        payload = {
+            "files": {GIST_FILENAME: {"content": f"Last blast: {today}"}}
+        }
+        r = requests.patch(f"https://api.github.com/gists/{gist_id}", headers=headers, json=payload, timeout=10)
+        
+        if r.status_code != 200:
+            print(f"⚠️  Failed to save log: {r.status_code}")
+        else:
+            print(f"✅ Log disimpan: {today}")
+            
+    except Exception as e:
+        print(f"⚠️  Error saving blast log: {e}")
 
-# ─── Core Functions ───────────────────────────────────────────────────────────
+# ─── Core Functions ────────────────────────────────────────────────────────
 
 TOPICS = [
     "kelebihan berwakaf dalam Islam",
@@ -182,7 +253,7 @@ def blast_to_groups(message):
 
     print(f"\n🎯 SELESAI — Berjaya: {success} | Gagal: {failed} | Total: {total}")
 
-# ─── Main ─────────────────────────────────────────────────────────────────────
+# ─── Main ───────────────────────────────────────────────────────────
 
 def test_send_to_number(message, number="60133700200"):
     url = "https://app.wabot.my/api/send"
@@ -205,21 +276,32 @@ def test_send_to_number(message, number="60133700200"):
 if __name__ == "__main__":
 
     # ── Safety check: jangan blast 2x sehari ──
-    gist_id = get_gist_id()
-    print("🔍 Semak log blast hari ni...")
-    if already_blasted_today():
-        print("⛔ BERHENTI — Blast dah dibuat hari ni. Cuba esok.")
-        exit(0)
-    print("✅ Belum blast hari ni. Teruskan...\n")
+    try:
+        gist_id = get_gist_id()
+        print("🔍 Semak log blast hari ni...")
+        if already_blasted_today():
+            print("⛔ BERHENTI — Blast dah dibuat hari ni. Cuba esok.")
+            exit(0)
+        print("✅ Belum blast hari ni. Teruskan...\n")
+    except Exception as e:
+        print(f"❌ Fatal error during safety check: {e}")
+        exit(1)
 
     # ── Generate tips ──
-    print("🚀 Generating tips wakaf & sedekah...")
-    tips = generate_tips()
-    print(f"📝 Tips hari ini:\n{tips}\n")
+    try:
+        print("🚀 Generating tips wakaf & sedekah...")
+        tips = generate_tips()
+        print(f"📝 Tips hari ini:\n{tips}\n")
+    except Exception as e:
+        print(f"❌ Failed to generate tips: {e}")
+        exit(1)
 
     # ── BLAST KE 18 GROUPS ──
     print(f"📤 Blasting ke {len(GROUP_IDS)} groups...")
     blast_to_groups(tips)
 
     # ── Save log supaya tak double-blast ──
-    save_blast_log(gist_id)
+    try:
+        save_blast_log(gist_id)
+    except Exception as e:
+        print(f"⚠️  Warning: Could not save blast log: {e}")
